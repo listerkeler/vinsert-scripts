@@ -43,13 +43,16 @@ public class MysteryBox extends RandomEvent {
 			}
 		}
 	}
-	
-	public void sleep(int millis) {
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis() - start < millis);
-	}
 
-	public String getAnswer() {
+    private void sleep(int time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+
+        }
+    }
+
+    private String getAnswer() {
 		String answer = "";
 		String question = getQuestion();
 		String sides = getSides();
@@ -62,8 +65,8 @@ public class MysteryBox extends RandomEvent {
 		log("The box answer is " + answer);
 		return answer;
 	}
-	
-	public String getQuestion() {
+
+    private String getQuestion() {
 		String question = "";
 		if (isValid(190)) {
 			question = context.widgets.get(190, 6).getText();
@@ -77,8 +80,8 @@ public class MysteryBox extends RandomEvent {
 		log("The box question is " + question);
 		return question;
 	}
-	
-	public String getSides() {
+
+    private String getSides() {
 		String result = "";
 		String[] shape = { "", "", "" };
 		String[] number = { "", "", "" };

@@ -1,6 +1,5 @@
 package org.listerkeler.scripts.ChlenixChopper;
 
-import javafx.event.ActionEvent;
 import org.listerkeler.api.randoms.MysteryBox;
 import org.listerkeler.api.util.Methods;
 import org.listerkeler.scripts.ChlenixChopper.ChlenixChopper.ScriptState;
@@ -14,6 +13,7 @@ import org.vinsert.bot.script.api.tools.Game.Tabs;
 import org.vinsert.bot.script.api.tools.Navigation.NavigationPolicy;
 import org.vinsert.bot.script.api.tools.Skills;
 import org.vinsert.bot.util.Filter;
+import org.vinsert.bot.util.Perspective;
 
 import javax.swing.*;
 import java.awt.*;
@@ -79,22 +79,23 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             new Path(new Tile(2709, 3505), new Tile(2708, 3506), new Tile(2718, 3498), bankPosition),
             new Path(new Tile(2711, 3508), new Tile(2707, 3505), new Tile(2716, 3497), bankPosition)
     };
+
     // IDs
     private static final int WILLOW = 1308;
     private static final int WILLOW_LOG = 1520;
 
-    private static final int[] BANK_BOOTHS = {25808};
+    private static final int[] BANK_BOOTHS = { 25808 };
 
     // Axes
-    public final int[] axeIds = new int[]{1360, 1351, 1352, 1349, 1350, 1353, 1354, 1355, 1356, 1357, 1358, 1359, 3063, 6740};
+    private final int[] axeIds = new int[] { 1360, 1351, 1352, 1349, 1350, 1353, 1354, 1355, 1356, 1357, 1358, 1359, 3063, 6740 };
 
     // NPCs
-    public final int[] randomEventNPCs = new int[]{2476, 3117, 2539, 409, 410, 2540, 411, 2470, 4375, 956, 407, 4416};
-    public final int[] randomEventItems = new int[]{3063, 9004};
+    private final int[] randomEventNPCs = new int[] { 2476, 3117, 2539, 409, 410, 2540, 411, 2470, 4375, 956, 407, 4416 };
+    private final int[] randomEventItems = new int[] { 3063, 9004 };
 
     // Tree Randoms
-    public final Integer[] treeEnts = new Integer[]{1740, 1731, 1735, 1736, 1739, 1737, 1734, 777};
-    public final int[] birdNests = new int[]{5071, 5072, 5073, 5074, 5075, 5070, 7413, 5076};
+    private final int[] treeEnts = new int[] { 1740, 1731, 1735, 1736, 1739, 1737, 1734, 777 };
+    private final int[] birdNests = new int[] { 5071, 5072, 5073, 5074, 5075, 5070, 7413, 5076 };
 
     // Anti-ban strings
     private final String[] randomChat = new String[]{"I'm almost level {wcLevel}", "Brb", "Back", "My dog is so annoying omg",
@@ -269,7 +270,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return random(50, 150);
     }
 
-    public <T extends Interactable & Hullable> void interact(T obj, String action) {
+    private <T extends Interactable & Hullable> void interact(T obj, String action) {
         Point objPoint;
         try {
             objPoint = obj.hullPoint(obj.hull());
@@ -304,7 +305,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 frame.setContentPane(GUI.getContentPane());
-                frame.setDefaultCloseOperation(2);
+                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE2);
                 frame.addWindowListener(new WindowAdapter() {
                     public void windowClosing(WindowEvent e) {
                         waitForGUI = false;
@@ -340,7 +341,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         log("Chlenix stopped chopping! Going back to pants.");
     }
 
-    public void antiBan(boolean waitingForTrees) {
+    private void antiBan(boolean waitingForTrees) {
         if ((System.currentTimeMillis() > this.lastAntiBan + this.antiBanInterval) && (!localPlayer.isMoving())) {
             int r = random(1, 20);
 
@@ -448,7 +449,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         }
     }
 
-    public String replace(String string, String[] toFind, String[] toReplace) {
+    private String replace(String string, String[] toFind, String[] toReplace) {
         if (toFind.length != toReplace.length) {
             throw new IllegalArgumentException("Arrays must be of the same length.");
         }
@@ -458,7 +459,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return string;
     }
 
-    public void moveMouseOffScreen(boolean report) {
+    private void moveMouseOffScreen(boolean report) {
         int r = random(1, 100);
 
         if (report) {
@@ -481,7 +482,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         }
     }
 
-    public void wiggleMouse() {
+    private void wiggleMouse() {
         int r = random(1, 100);
         if ((r > 35) && (r < 50)) {
             for (int i = 0; i < random(4, 7); i++)
@@ -489,7 +490,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         }
     }
 
-    public void updateTimeData() {
+    private void updateTimeData() {
         if (System.currentTimeMillis() >= this.startTime + 1000L) {
             this.runningTime += 1L;
             if (this.antiBanCountdown > 0L) {
@@ -498,9 +499,9 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             this.startTime = System.currentTimeMillis();
         }
 
-        int mins = 0;
-        int hours = 0;
-        int seconds = 0;
+        int mins;
+        int hours;
+        int seconds;
 
         seconds = (int) runningTime;
         mins = seconds / 60;
@@ -514,7 +515,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         formattedTime = (format.format(hours) + ":" + format.format(mins) + ":" + format.format(seconds));
     }
 
-    public void updateRenderData() {
+    private void updateRenderData() {
         // Chopped down logs
         if (inventory.getCount(false, WILLOW_LOG) > inventoryLogs) {
             logsCut++;
@@ -566,7 +567,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         g.drawLine(mousePoint.x, mousePoint.y - 20, mousePoint.x, mousePoint.y + 20);
     }
 
-    public static void drawProgressBar(Graphics2D g, final int x, final int y, final int width, final int height, final Color main, final Color progress,
+    private static void drawProgressBar(Graphics2D g, final int x, final int y, final int width, final int height, final Color main, final Color progress,
                                        final int alpha, final int percentage) {
 
         g.setRenderingHints(new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON));
@@ -589,10 +590,11 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         g.drawRect(x, y, width, height);
     }
 
-    public String formatClock(int s) {
-        int mins = 0;
-        int hours = 0;
-        int seconds = 0;
+    private String formatClock(int s) {
+        int mins;
+        int hours;
+        int seconds;
+
         seconds = s;
         mins = seconds / 60;
         hours = mins / 60;
@@ -605,17 +607,19 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return format.format(hours) + ":" + format.format(mins) + ":" + format.format(seconds);
     }
 
-    public void detectEnts() {
-        if (localPlayer.isAnimating() && isTreeEnt()) {
+    private void detectEnts() {
+        if (checkForEnt()) {
             if (debugMode) {
                 log("Ent detected!");
             }
-            navigation.navigate(getCenterOfArea(treeArea), NavigationPolicy.SCREEN);
-            sleep(500, 1100);
+            final Tile t = localPlayer.getLocation();
+            Point p = Perspective.trans_tile_minimap(getContext().getClient(), t.getX(), t.getY());
+            mouse.click(p.x, p.y);
+
         }
     }
 
-    public void checkForBirdsNest() {
+    private void checkForBirdsNest() {
         for (GroundItem nest : groundItems.getAll(Filters.groundItemId(birdNests), treeArea)) {
             if (nest != null) {
                 if (debugMode) {
@@ -626,12 +630,12 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         }
     }
 
-    private boolean isTreeEnt() {
-        Actor a = localPlayer.getInteracting();
-        return a != null && (a instanceof Npc) && contains(treeEnts, ((Npc) a).getId());
+    private boolean checkForEnt() {
+        final GameObject ent = objects.getNearest(Filters.objectId(treeEnts));
+        return ent != null && ent.getLocation().distanceTo(localPlayer.getLocation()) <= 1 && localPlayer.getAnimation() != -1;
     }
 
-    public <T> boolean contains(T[] arr, T obj) {
+    private <T> boolean contains(T[] arr, T obj) {
         for (T t : arr) {
             if (t == null) continue;
             if (t.equals(obj))
@@ -640,7 +644,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return false;
     }
 
-    public Player getNearestPlayer() {
+    private Player getNearestPlayer() {
         Player nearestPlayer = null;
         for (Player p : players.getPlayers(new Filter<Player>() {
             public boolean accept(Player player) {
@@ -661,11 +665,11 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return nearestPlayer;
     }
 
-    public Tile getCenterOfArea(Area a) {
+    private Tile getCenterOfArea(Area a) {
         return new Tile((a.getBottomLeft().getX() + a.getTopRight().getX()) / 2, (a.getBottomLeft().getY() + a.getTopRight().getY()) / 2);
     }
 
-    public Tile getBestWalkableTile() {
+    private Tile getBestWalkableTile() {
         Tile bestTile = null;
         for (int i = 0; i < treePath.length - 1; i++) {
             for (Tile t : treePath[i].getTiles()) {
@@ -681,7 +685,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return bestTile;
     }
 
-    public boolean getRandomNPCHere() {
+    private boolean getRandomNPCHere() {
         Npc randomNPC = npcs.getNearest(randomEventNPCs);
         if (randomNPC != null && (localPlayer.getLocation().distanceTo(randomNPC.getLocation()) <= 2)) {
             randomEventNPC = randomNPC;
@@ -690,7 +694,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return false;
     }
 
-    public boolean getRandomItemHere() {
+    private boolean getRandomItemHere() {
         if (inventory.contains(Filters.itemId(randomEventItems))) {
             randomEventItem = inventory.getItem(randomEventItems);
             return true;
@@ -702,14 +706,14 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         handlingRandom = false;
     }
 
-    public void clickToContinue() {
+    private void clickToContinue() {
         Point randPoint = Methods.getRandomPointNear(new Point(305, 449), 7);
         mouse.move(randPoint.x, randPoint.y);
         sleep(200, 400);
         mouse.click(true);
     }
 
-    public void solveRandomNPC(int npcId) {
+    private void solveRandomNPC(int npcId) {
         switch (npcId) {
             case 2476:
                 // Rick Turpentine
@@ -761,7 +765,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         }
     }
 
-    public void solveRandomItem(int itemId) {
+    private void solveRandomItem(int itemId) {
         switch (itemId) {
             case 9004:
                 // Security Handbook
@@ -828,9 +832,16 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         @Override
         public void actionPerformed(java.awt.event.ActionEvent e) {
             if (e.getSource().equals(btnStart)) {
-
-                System.out.println(comboTrees.getSelectedItem());
-
+                switch (comboTrees.getSelectedItem().toString()) {
+                    case "Willows":
+                        break;
+                    case "Maples":
+                        break;
+                    case "Yews":
+                        break;
+                    case "Magics":
+                        break;
+                }
                 context.waitForGUI = false;
             }
         }
