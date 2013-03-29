@@ -1,11 +1,10 @@
 package org.listerkeler.api.randoms;
 
+import org.listerkeler.api.util.Timer;
+import org.listerkeler.scripts.ChlenixChopper.ChlenixChopper;
 import org.vinsert.bot.script.ScriptContext;
 import org.vinsert.bot.script.api.Item;
 import org.vinsert.bot.script.api.Widget;
-
-import org.listerkeler.api.util.Timer;
-import org.listerkeler.scripts.ChlenixChopper.ChlenixChopper;
 
 public class MysteryBox extends RandomEvent {
 	

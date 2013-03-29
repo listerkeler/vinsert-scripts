@@ -305,7 +305,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 frame.setContentPane(GUI.getContentPane());
-                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE2);
+                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                 frame.addWindowListener(new WindowAdapter() {
                     public void windowClosing(WindowEvent e) {
                         waitForGUI = false;
