@@ -896,7 +896,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                         context.setSettings(new ChlenixChopperSettings(MAGIC_TREE, seersBankArea, MAGIC_LOG, Tree.MAGIC));
                         break;
                 }
-               // context.waitForGUI = false;
+                context.waitForGUI = false;
             }
         }
     }
