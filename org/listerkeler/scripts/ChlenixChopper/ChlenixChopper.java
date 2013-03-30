@@ -103,10 +103,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
     // Axes
     private final int[] axeIds = new int[] { 1360, 1351, 1352, 1349, 1350, 1353, 1354, 1355, 1356, 1357, 1358, 1359, 3063, 6740 };
 
-    // NPCs
-    private final int[] randomEventNPCs = new int[] { 2476, 3117, 2539, 409, 410, 2540, 411, 2470, 4375, 956, 407, 4416 };
-    private final int[] randomEventItems = new int[] { 3063, 9004 };
-
     // Tree Randoms
     private final int[] treeEnts = new int[] { 1740, 1731, 1735, 1736, 1739, 1737, 1734, 777 };
     private final int[] birdNests = new int[] { 5071, 5072, 5073, 5074, 5075, 5070, 7413, 5076 };
@@ -127,12 +123,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         // Check if we're in combat and run away
         if (me.isInCombat()) {
             return ScriptState.COMBAT;
-        }
-
-        // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
-        // Check if any random events  have appeared
-        if (getRandomNPCHere() || getRandomItemHere()) {
-            return ScriptState.SOLVING_RANDOM;
         }
 
         // Check if the script is paused
@@ -366,6 +356,9 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                 }
             }, random(6000, 7000));
         }
+
+        // Let's register the randoms
+        getContext().getBot().getRandomEvents().register(new MysteryBox());
 
         startExperience = skills.getExperience(Skills.WOODCUTTING);
 
@@ -729,25 +722,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return bestTile;
     }
 
-    // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
-    private boolean getRandomNPCHere() {
-        Npc randomNPC = npcs.getNearest(randomEventNPCs);
-        if (randomNPC != null && (localPlayer.getLocation().distanceTo(randomNPC.getLocation()) <= 2)) {
-            randomEventNPC = randomNPC;
-            return true;
-        }
-        return false;
-    }
-
-    // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
-    private boolean getRandomItemHere() {
-        if (inventory.contains(Filters.itemId(randomEventItems))) {
-            randomEventItem = inventory.getItem(randomEventItems);
-            return true;
-        }
-        return false;
-    }
-
     public static void finishedRandom() {
         handlingRandom = false;
     }
@@ -825,8 +799,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
 
             case 3063:
                 // Mystery Box
-                MysteryBox mb = new MysteryBox(getContext());
-                mb.solve();
+
                 break;
         }
     }
