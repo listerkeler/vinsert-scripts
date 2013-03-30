@@ -24,12 +24,14 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.DecimalFormat;
 
-@ScriptManifest(name = "ChlenixChopper", authors = {"SpK", "Chlenix"}, description = "Chops various trees", version = 1.5D)
+@ScriptManifest(name = "ChlenixChopper", authors = {"listerkeler", "Chlenix"}, description = "Chops various trees", version = 1.5D)
 public class ChlenixChopper extends StatefulScript<ScriptState> {
 
     // Debugging stuff
     private final boolean debugMode = true;
     public boolean waitForGUI = true;
+
+    // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
     private static boolean handlingRandom = false;
 
     private long lastMove = System.currentTimeMillis();
@@ -127,6 +129,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             return ScriptState.COMBAT;
         }
 
+        // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
         // Check if any random events  have appeared
         if (getRandomNPCHere() || getRandomItemHere()) {
             return ScriptState.SOLVING_RANDOM;
@@ -259,6 +262,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                 log("Something went terribly wrong, in RECOVERY state.");
                 break;
 
+            // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
             case SOLVING_RANDOM:
                 if(!handlingRandom) {
                     handlingRandom = true;
@@ -725,6 +729,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return bestTile;
     }
 
+    // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
     private boolean getRandomNPCHere() {
         Npc randomNPC = npcs.getNearest(randomEventNPCs);
         if (randomNPC != null && (localPlayer.getLocation().distanceTo(randomNPC.getLocation()) <= 2)) {
@@ -734,6 +739,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return false;
     }
 
+    // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
     private boolean getRandomItemHere() {
         if (inventory.contains(Filters.itemId(randomEventItems))) {
             randomEventItem = inventory.getItem(randomEventItems);
@@ -754,7 +760,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         mouse.click(true);
     }
 
-    // TODO: Merge into one main solveRandom() method after debugging -- use real RandomEvent
+    // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
     private void solveRandomNPC(int npcId) {
         switch (npcId) {
             case 2476:
@@ -807,7 +813,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         }
     }
 
-    // TODO: Merge into one main solveRandom() method after debugging -- use real RandomEvent
+    // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
     private void solveRandomItem(int itemId) {
         switch (itemId) {
             case 9004:
