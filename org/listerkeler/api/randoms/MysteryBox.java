@@ -1,10 +1,10 @@
 package org.listerkeler.api.randoms;
 
 import org.listerkeler.api.util.Timer;
-import org.listerkeler.scripts.ChlenixChopper.ChlenixChopper;
 import org.vinsert.bot.script.ScriptContext;
 import org.vinsert.bot.script.api.Item;
 import org.vinsert.bot.script.api.Widget;
+import org.listerkeler.scripts.ChlenixChopper.ChlenixChopper;
 
 public class MysteryBox extends RandomEvent {
 	
@@ -104,8 +104,7 @@ public class MysteryBox extends RandomEvent {
 
 		if (isValid(190)) {
 			for (int i = 0; i < 3; i++) {
-                // TODO: Add .getModelId() is here
-                final int widgetShape = context.widgets.get(190, i).getId();
+                final int widgetShape = context.widgets.get(190, i).getModelId();
                 if (contains(circle, widgetShape)) shape[i] = "circle";
 				if (contains(pentagon, widgetShape)) shape[i] = "pentagon";
 				if (contains(star, widgetShape)) shape[i] = "star";
@@ -114,8 +113,7 @@ public class MysteryBox extends RandomEvent {
 			}
 
 			for (int i = 3; i < 6; i++) {
-                // TODO: Add .getModelId() is here
-                final int widgetNumber = context.widgets.get(190, i).getId();
+                final int widgetNumber = context.widgets.get(190, i).getModelId();
                 if (contains(n0, widgetNumber)) number[(i - 3)] = "0";
 				if (contains(n1, widgetNumber)) number[(i - 3)] = "1";
 				if (contains(n2, widgetNumber)) number[(i - 3)] = "2";

@@ -1,7 +1,9 @@
 package org.listerkeler.scripts.ChlenixChopper;
 
 import org.listerkeler.api.randoms.MysteryBox;
+import org.listerkeler.api.util.Condition;
 import org.listerkeler.api.util.Methods;
+import org.listerkeler.api.util.Timer;
 import org.listerkeler.scripts.ChlenixChopper.ChlenixChopper.ScriptState;
 import org.vinsert.bot.script.ScriptManifest;
 import org.vinsert.bot.script.StatefulScript;
@@ -9,6 +11,7 @@ import org.vinsert.bot.script.api.*;
 import org.vinsert.bot.script.api.generic.Filters;
 import org.vinsert.bot.script.api.generic.Hullable;
 import org.vinsert.bot.script.api.generic.Interactable;
+import org.vinsert.bot.script.api.tools.Game;
 import org.vinsert.bot.script.api.tools.Game.Tabs;
 import org.vinsert.bot.script.api.tools.Navigation.NavigationPolicy;
 import org.vinsert.bot.script.api.tools.Skills;
@@ -58,31 +61,45 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
     private final ChlenixChopperGUI GUI = new ChlenixChopperGUI(this);
     private final JFrame frame = new JFrame("ChlenixChopper");
 
+    // Settings
+    private static ChlenixChopperSettings scriptSettings;
+
+    private static Area bankArea;
+    private static Area treeArea;
+
+    private static int[] TREE_OBJECT;
+    private static int TREE_LOG;
+
+    private static Path[] treePath;
+    private static Path[] bankPath;
+
     // Formats
     private final DecimalFormat numberFormat = new DecimalFormat("#,###");
 
     // Areas
-    private final Area bankArea = new Area(new Tile(2721, 3490), new Tile(2730, 3493));
-    private final Area treeArea = new Area(new Tile(2704, 3504), new Tile(2720, 3514));
+    private final static Area seersBankArea = new Area(new Tile(2721, 3490), new Tile(2730, 3493));
+    private final static Area seersTreeArea = new Area(new Tile(2704, 3504), new Tile(2720, 3514));
 
     // Tiles
-    private final Tile bankPosition = getCenterOfArea(bankArea);
-    private final Tile treePosition = getCenterOfArea(treeArea);
+    private static Tile bankPosition;
+    private static Tile treePosition;
 
     // Paths
-    private final Path[] treePath = {new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
-            new Path(bankPosition, new Tile(2718, 3498), new Tile(2708, 3506), new Tile(2709, 3505), treePosition),
-            new Path(bankPosition, new Tile(2716, 3497), new Tile(2707, 3505), new Tile(2711, 3508), treePosition)
-    };
-
-    private final Path[] bankPath = {new Path(new Tile(2710, 3505), new Tile(2709, 3507), new Tile(2717, 3499), bankPosition),
-            new Path(new Tile(2709, 3505), new Tile(2708, 3506), new Tile(2718, 3498), bankPosition),
-            new Path(new Tile(2711, 3508), new Tile(2707, 3505), new Tile(2716, 3497), bankPosition)
-    };
+    public static Path[] seersWillowPath;
 
     // IDs
-    private static final int WILLOW = 1308;
-    private static final int WILLOW_LOG = 1520;
+    public static final int[] WILLOW_TREE = { 1308, 5551, 5552, 5553 };
+    public static final int WILLOW_LOG = 1520;
+
+    public static final int[] MAPLE_TREE = { 1307 };
+    public static final int MAPLE_LOG = 1520;
+
+    public static final int[] YEW_TREE = { 1309 };
+    public static final int YEW_LOG = 1520;
+
+    public static final int[] MAGIC_TREE = { 1306 };
+    public static final int MAGIC_LOG = 1514;
+
 
     private static final int[] BANK_BOOTHS = { 25808 };
 
@@ -152,6 +169,23 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return ScriptState.RECOVERY;
     }
 
+    public void setSettings(ChlenixChopperSettings newSettings) {
+        bankArea = newSettings.getBankArea();
+        treeArea = newSettings.getTreeArea();
+
+        TREE_LOG = newSettings.getLogId();
+        TREE_OBJECT = newSettings.getTreeIds();
+
+        treePath = newSettings.getTreePath();
+        bankPath = new Path[treePath.length];
+        for (int p = 0; p < treePath.length; p++) {
+            bankPath[p] = treePath[p].reverse();
+        }
+
+        bankPosition = getCenterOfArea(bankArea);
+        treePosition = getCenterOfArea(treeArea);
+    }
+
     @Override
     public int handle(ScriptState state) {
         switch (state) {
@@ -183,11 +217,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                     log("Haven't moved for 20 seconds... trying some shit");
                     requestExit();
                 }
-                navigation.navigate(bankPath[random(0, treePath.length - 1)], 2, NavigationPolicy.MINIMAP);
-                // TODO: Temporary fix, remove.
-                for (Path p : treePath) {
-                    p.reset();
-                }
+                navigation.navigate(bankPath[random(0, bankPath.length - 1)], 2, NavigationPolicy.MINIMAP);
                 break;
 
             case WALK_TO_TREES:
@@ -196,10 +226,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                     requestExit();
                 }
                 navigation.navigate(treePath[random(0, treePath.length - 1)], 2, NavigationPolicy.MINIMAP);
-                // TODO: Temporary fix, remove.
-                for (Path p : bankPath) {
-                    p.reset();
-                }
                 break;
 
             case CHOPPING:
@@ -211,22 +237,22 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             case CHOP:
                 checkForBirdsNest();
 
-                GameObject willowTree = objects.getNearest(Filters.objectId(WILLOW));
+                GameObject nearestTree = objects.getNearest(Filters.objectId(TREE_OBJECT));
 
                 if (debugMode) {
-                    log("FOUND TREE! X=" + willowTree.getLocation().getX() + ", Y=" + willowTree.getLocation().getY());
+                    System.out.println("FOUND TREE! X=" + nearestTree.getLocation().getX() + ", Y=" + nearestTree.getLocation().getY());
                 }
 
-                if (willowTree != null) {
-                    if (!camera.isVisible(willowTree)) {
-                        camera.rotateToObject(willowTree);
+                if (nearestTree != null) {
+                    if (!camera.isVisible(nearestTree)) {
+                        camera.rotateToObject(nearestTree);
                         sleep(800, 1200);
                     }
-                    interact(willowTree, "Chop");
+                    interact(nearestTree, "Chop");
                     sleep(800, 1200);
                 } else {
                     if (debugMode) {
-                        log("Waiting for trees...");
+                        System.out.println("Waiting for trees...");
                     }
                     antiBan(true);
                 }
@@ -270,6 +296,16 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return random(50, 150);
     }
 
+    public boolean waitFor(final Condition condition, final long timeOut) {
+        Timer timer = new Timer(timeOut);
+        while (timer.isRunning()) {
+            if (condition.validate()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private <T extends Interactable & Hullable> void interact(T obj, String action) {
         Point objPoint;
         try {
@@ -305,7 +341,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 frame.setContentPane(GUI.getContentPane());
-                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
                 frame.addWindowListener(new WindowAdapter() {
                     public void windowClosing(WindowEvent e) {
                         waitForGUI = false;
@@ -322,12 +358,26 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             sleep(500, 1000);
         }
 
+        seersWillowPath = new Path[] {new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
+                new Path(bankPosition, new Tile(2718, 3498), new Tile(2708, 3506), new Tile(2709, 3505), treePosition),
+                new Path(bankPosition, new Tile(2716, 3497), new Tile(2707, 3505), new Tile(2711, 3508), treePosition)
+        };
+
+        if (game.getGameState() == Game.GameState.LOGIN) {
+            waitFor(new Condition() {
+                @Override
+                public boolean validate() {
+                    return game.getGameState() == Game.GameState.INGAME;
+                }
+            }, random(6000, 7000));
+        }
+
         startExperience = skills.getExperience(Skills.WOODCUTTING);
 
         antiBanInterval = random(10, 50) * 1000L;
         antiBanCountdown = antiBanInterval / 1000L;
 
-        inventoryLogs = inventory.getCount(false, WILLOW_LOG);
+        inventoryLogs = inventory.getCount(false, TREE_LOG);
 
         for (int i = 0; i < 25; i++) {
             camera.adjustPitch(1);
@@ -342,7 +392,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
     }
 
     private void antiBan(boolean waitingForTrees) {
-        if ((System.currentTimeMillis() > this.lastAntiBan + this.antiBanInterval) && (!localPlayer.isMoving())) {
+        if ((System.currentTimeMillis() > lastAntiBan + antiBanInterval) && (!localPlayer.isMoving())) {
             int r = random(1, 20);
 
             if (waitingForTrees)
@@ -517,9 +567,9 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
 
     private void updateRenderData() {
         // Chopped down logs
-        if (inventory.getCount(false, WILLOW_LOG) > inventoryLogs) {
+        if (inventory.getCount(false, TREE_LOG) > inventoryLogs) {
             logsCut++;
-            inventoryLogs = inventory.getCount(false, WILLOW_LOG);
+            inventoryLogs = inventory.getCount(false, TREE_LOG);
         }
 
         // Experience based variables
@@ -607,26 +657,26 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return format.format(hours) + ":" + format.format(mins) + ":" + format.format(seconds);
     }
 
+    private void checkForBirdsNest() {
+        for (GroundItem nest : groundItems.getAll(Filters.groundItemId(birdNests), treeArea)) {
+            if (nest != null) {
+                if (debugMode) {
+                    System.out.println("Found birds nest! Picking up...");
+                }
+                interact(nest, "Take");
+            }
+        }
+    }
+
     private void detectEnts() {
         if (checkForEnt()) {
             if (debugMode) {
-                log("Ent detected!");
+                System.out.println("Ent detected!");
             }
             final Tile t = localPlayer.getLocation();
             Point p = Perspective.trans_tile_minimap(getContext().getClient(), t.getX(), t.getY());
             mouse.click(p.x, p.y);
 
-        }
-    }
-
-    private void checkForBirdsNest() {
-        for (GroundItem nest : groundItems.getAll(Filters.groundItemId(birdNests), treeArea)) {
-            if (nest != null) {
-                if (debugMode) {
-                    log("Found birds nest! Picking up...");
-                }
-                interact(nest, "Take");
-            }
         }
     }
 
@@ -706,6 +756,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         handlingRandom = false;
     }
 
+    // TODO: Remove when added into API
     private void clickToContinue() {
         Point randPoint = Methods.getRandomPointNear(new Point(305, 449), 7);
         mouse.move(randPoint.x, randPoint.y);
@@ -713,6 +764,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         mouse.click(true);
     }
 
+    // TODO: Merge into one main solveRandom() method after debugging -- use real RandomEvent
     private void solveRandomNPC(int npcId) {
         switch (npcId) {
             case 2476:
@@ -765,11 +817,12 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         }
     }
 
+    // TODO: Merge into one main solveRandom() method after debugging -- use real RandomEvent
     private void solveRandomItem(int itemId) {
         switch (itemId) {
             case 9004:
-                // Security Handbook
-                inventory.interact(inventory.indexOf(inventory.getItem(new int[]{itemId})), "Drop");
+                // Security Handbook TODO: Change to int when .getItem is fixed
+                inventory.interact(inventory.indexOf(inventory.getItem(new int[]{ itemId })), "Drop");
                 sleep(250, 500);
                 finishedRandom();
                 break;
@@ -832,8 +885,10 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         @Override
         public void actionPerformed(java.awt.event.ActionEvent e) {
             if (e.getSource().equals(btnStart)) {
+                System.out.println(comboTrees.getSelectedItem().toString());
                 switch (comboTrees.getSelectedItem().toString()) {
                     case "Willows":
+                        context.setSettings(new ChlenixChopperSettings(WILLOW_TREE, seersBankArea, seersTreeArea, WILLOW_LOG, seersWillowPath));
                         break;
                     case "Maples":
                         break;
@@ -842,8 +897,44 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                     case "Magics":
                         break;
                 }
-                context.waitForGUI = false;
+               // context.waitForGUI = false;
             }
+        }
+    }
+
+    public class ChlenixChopperSettings {
+        private int[] treeIds;
+        private Area treeArea;
+        private Area bankArea;
+        private int logId;
+        private Path[] treePath;
+
+        public int[] getTreeIds() {
+            return this.treeIds;
+        }
+
+        public Area getTreeArea() {
+            return this.treeArea;
+        }
+
+        public Area getBankArea() {
+            return this.bankArea;
+        }
+
+        public int getLogId() {
+            return this.logId;
+        }
+
+        public Path[] getTreePath() {
+            return this.treePath;
+        }
+
+        public ChlenixChopperSettings(int[] treeIds, Area bankArea, Area treeArea, int logId, Path[] treePath) {
+            this.logId = logId;
+            this.treeIds = treeIds;
+            this.bankArea = bankArea;
+            this.treeArea = treeArea;
+            this.treePath = treePath;
         }
     }
 }
