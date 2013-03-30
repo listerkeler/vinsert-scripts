@@ -16,7 +16,6 @@ import org.vinsert.bot.script.api.tools.Game.Tabs;
 import org.vinsert.bot.script.api.tools.Navigation.NavigationPolicy;
 import org.vinsert.bot.script.api.tools.Skills;
 import org.vinsert.bot.util.Filter;
-import org.vinsert.bot.util.Perspective;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,14 +77,10 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
 
     // Areas
     private final static Area seersBankArea = new Area(new Tile(2721, 3490), new Tile(2730, 3493));
-    private final static Area seersWillowArea = new Area(new Tile(2704, 3504), new Tile(2720, 3514));
 
     // Tiles
     private static Tile bankPosition;
     private static Tile treePosition;
-
-    // Paths
-    public static Path[] seersWillowPath;
 
     // IDs
     public static final int[] WILLOW_TREE = { 1308, 5551, 5552, 5553 };
@@ -660,25 +655,24 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                     System.out.println("Found birds nest! Picking up...");
                 }
                 interact(nest, "Take");
+                sleep(500, 1100);
             }
         }
     }
 
     private void detectEnts() {
-        if (checkForEnt()) {
+        if (isTreeEnt()) {
             if (debugMode) {
                 System.out.println("Ent detected!");
             }
-            final Tile t = localPlayer.getLocation();
-            Point p = Perspective.trans_tile_minimap(getContext().getClient(), t.getX(), t.getY());
-            mouse.click(p.x, p.y);
-
+            navigation.navigate(treeArea.getCenter(), NavigationPolicy.MIXED);
+            sleep(500, 1100);
         }
     }
 
-    private boolean checkForEnt() {
-        final GameObject ent = objects.getNearest(Filters.objectId(treeEnts));
-        return ent != null && ent.getLocation().distanceTo(localPlayer.getLocation()) <= 1 && localPlayer.getAnimation() != -1;
+    private boolean isTreeEnt() {
+        Actor a = localPlayer.getInteracting();
+        return a!= null && a instanceof Npc;
     }
 
     private <T> boolean contains(T[] arr, T obj) {
@@ -890,16 +884,16 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             if (e.getSource().equals(btnStart)) {
                 switch (comboTrees.getSelectedItem().toString()) {
                     case "Willows":
-                        context.setSettings(new ChlenixChopperSettings(WILLOW_TREE, seersBankArea, seersWillowArea, WILLOW_LOG, seersWillowPath, Tree.WILLOW));
+                        context.setSettings(new ChlenixChopperSettings(WILLOW_TREE, seersBankArea, WILLOW_LOG, Tree.WILLOW));
                         break;
                     case "Maples":
-                        context.setSettings(new ChlenixChopperSettings(MAPLE_TREE, seersBankArea, seersWillowArea, MAPLE_LOG, seersWillowPath, Tree.MAPLE));
+                        context.setSettings(new ChlenixChopperSettings(MAPLE_TREE, seersBankArea, MAPLE_LOG, Tree.MAPLE));
                         break;
                     case "Yews":
-                        context.setSettings(new ChlenixChopperSettings(YEW_TREE, seersBankArea, seersWillowArea, YEW_LOG, seersWillowPath, Tree.YEW));
+                        context.setSettings(new ChlenixChopperSettings(YEW_TREE, seersBankArea, YEW_LOG, Tree.YEW));
                         break;
                     case "Magics":
-                        context.setSettings(new ChlenixChopperSettings(MAGIC_TREE, seersBankArea, seersWillowArea, MAGIC_LOG, seersWillowPath, Tree.MAGIC));
+                        context.setSettings(new ChlenixChopperSettings(MAGIC_TREE, seersBankArea, MAGIC_LOG, Tree.MAGIC));
                         break;
                 }
                // context.waitForGUI = false;
@@ -909,10 +903,8 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
 
     public class ChlenixChopperSettings {
         private int[] treeIds;
-        private Area treeArea;
         private Area bankArea;
         private int logId;
-        private Path[] treePath;
         private Tree treeType;
         private Tile bankPosition;
         private Tile treePosition;
@@ -922,7 +914,23 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         }
 
         public Area getTreeArea() {
-            return this.treeArea;
+            switch (getTreeType()) {
+                case WILLOW:
+                    return new Area(new Tile(2704, 3504), new Tile(2720, 3514));
+
+                case MAPLE:
+                    // TODO: Replace with real MAPLE area
+                    return new Area(new Tile(2704, 3504), new Tile(2720, 3514));
+
+                case YEW:
+                    // TODO: Replace with real YEW area
+                    return new Area(new Tile(2704, 3504), new Tile(2720, 3514));
+
+                case MAGIC:
+                    // TODO: Replace with real MAGIC area
+                    return new Area(new Tile(2704, 3504), new Tile(2720, 3514));
+            }
+            return null;
         }
 
         public Area getBankArea() {
@@ -940,18 +948,21 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                             new Path(bankPosition, new Tile(2718, 3498), new Tile(2708, 3506), new Tile(2709, 3505), treePosition),
                             new Path(bankPosition, new Tile(2716, 3497), new Tile(2707, 3505), new Tile(2711, 3508), treePosition)
                     };
+
                 case MAPLE:
                     // TODO: Replace with real MAPLE path
                     return  new Path[] {new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
                             new Path(bankPosition, new Tile(2718, 3498), new Tile(2708, 3506), new Tile(2709, 3505), treePosition),
                             new Path(bankPosition, new Tile(2716, 3497), new Tile(2707, 3505), new Tile(2711, 3508), treePosition)
                     };
+
                 case YEW:
                     // TODO: Replace with real YEW path
                     return  new Path[] {new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
                             new Path(bankPosition, new Tile(2718, 3498), new Tile(2708, 3506), new Tile(2709, 3505), treePosition),
                             new Path(bankPosition, new Tile(2716, 3497), new Tile(2707, 3505), new Tile(2711, 3508), treePosition)
                     };
+
                 case MAGIC:
                     // TODO: Replace with real MAGIC path
                     return  new Path[] {new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
@@ -972,12 +983,10 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             return this.treePosition;
         }
 
-        public ChlenixChopperSettings(int[] treeIds, Area bankArea, Area treeArea, int logId, Path[] treePath, Tree treeType) {
+        public ChlenixChopperSettings(int[] treeIds, Area bankArea, int logId, Tree treeType) {
             this.logId = logId;
             this.treeIds = treeIds;
             this.bankArea = bankArea;
-            this.treeArea = treeArea;
-            this.treePath = treePath;
             this.treeType = treeType;
             this.bankPosition = getCenterOfArea(bankArea);
             this.treePosition = getCenterOfArea(treeArea);
