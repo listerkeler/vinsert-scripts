@@ -995,7 +995,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             this.bankArea = bankArea;
             this.treeType = treeType;
             this.bankPosition = getCenterOfArea(bankArea);
-            this.treePosition = getCenterOfArea(treeArea);
+            this.treePosition = getCenterOfArea(getTreeArea());
         }
     }
 }

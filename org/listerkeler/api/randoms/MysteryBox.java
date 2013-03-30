@@ -1,10 +1,10 @@
 package org.listerkeler.api.randoms;
 
 import org.listerkeler.api.util.Timer;
+import org.listerkeler.scripts.ChlenixChopper.ChlenixChopper;
 import org.vinsert.bot.script.ScriptContext;
 import org.vinsert.bot.script.api.Item;
 import org.vinsert.bot.script.api.Widget;
-import org.listerkeler.scripts.ChlenixChopper.ChlenixChopper;
 
 public class MysteryBox extends RandomEvent {
 	
@@ -33,8 +33,8 @@ public class MysteryBox extends RandomEvent {
 					}
 				} else { 
 					int itemSlot = context.inventory.indexOf(context.inventory.getItem(MYSTERY_BOX));
-				  
-					log("Clicking box (" + itemSlot + ") in inventory");
+
+                    System.out.println("Clicking box (" + itemSlot + ") in inventory");
 				  
 					context.inventory.interact(itemSlot, "Open");
 					for (Timer t = new Timer(2000L); (t.getElapsed() < 2000L) && (!isValid(190)); sleep(100));
@@ -61,7 +61,7 @@ public class MysteryBox extends RandomEvent {
 		    	answer = i.replace(question, "");
 		    }
 		}
-		log("The box answer is " + answer);
+		System.out.println("The box answer is " + answer);
 		return answer;
 	}
 
@@ -76,7 +76,7 @@ public class MysteryBox extends RandomEvent {
 				question = question.substring(question.indexOf("the ") + "the ".length(), question.indexOf("?")).toLowerCase();
 			}
 		}
-		log("The box question is " + question);
+        System.out.println("The box question is " + question);
 		return question;
 	}
 
@@ -130,7 +130,7 @@ public class MysteryBox extends RandomEvent {
 				result = result + shape[i] + number[i] + "-";
 			}
 		}
-		log("The box sides are " + result);
+        System.out.println("The box sides are " + result);
 		return result;
 	}
 }
