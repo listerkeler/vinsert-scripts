@@ -31,9 +31,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
     private final boolean debugMode = true;
     public boolean waitForGUI = true;
 
-    // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
-    private static boolean handlingRandom = false;
-
     private long lastMove = System.currentTimeMillis();
     private long startTime = System.currentTimeMillis();
     private long runningTime = 0L;
@@ -116,7 +113,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
     @Override
     public ScriptState determine() {
         Player me = localPlayer;
-        if (me.isMoving() || localPlayer.getAnimation() == 867) {
+        if (me.isMoving() || localPlayer.getAnimation() == 867 || localPlayer.getAnimation() == 2846) {
             lastMove = System.currentTimeMillis();
         }
 
@@ -149,7 +146,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         if (!inventory.isFull()) {
             if (localPlayer.getAnimation() == -1) {
                 return ScriptState.CHOP;
-            } else if (localPlayer.getAnimation() == 867) {
+            } else if (localPlayer.getAnimation() == 867 || localPlayer.getAnimation() == 2846) {
                 return ScriptState.CHOPPING;
             }
         }
@@ -195,7 +192,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                             camera.rotateToObject(bankBooth);
                             sleep(800, 1200);
                         }
-                        interact(bankBooth, "Bank");
+                        bankBooth.interact("Bank");
                         sleep(800, 1200);
                     }
                 }
@@ -207,6 +204,9 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                     requestExit();
                 }
                 navigation.navigate(bankPath[random(0, bankPath.length - 1)], 2, NavigationPolicy.MINIMAP);
+                for (Path p : treePath) {
+                    p.reset();
+                }
                 break;
 
             case WALK_TO_TREES:
@@ -215,6 +215,9 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                     requestExit();
                 }
                 navigation.navigate(treePath[random(0, treePath.length - 1)], 2, NavigationPolicy.MINIMAP);
+                for (Path p : bankPath) {
+                    p.reset();
+                }
                 break;
 
             case CHOPPING:
@@ -237,7 +240,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                         camera.rotateToObject(nearestTree);
                         sleep(800, 1200);
                     }
-                    interact(nearestTree, "Chop");
+                    nearestTree.interact("Chop");
                     sleep(800, 1200);
                 } else {
                     if (debugMode) {
@@ -250,28 +253,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
 
             case RECOVERY:
                 log("Something went terribly wrong, in RECOVERY state.");
-                break;
-
-            // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
-            case SOLVING_RANDOM:
-                if(!handlingRandom) {
-                    handlingRandom = true;
-                    if (randomEventNPC != null) {
-                        log("The random with ID " + randomEventNPC.getId() + " (" + randomEventNPC.getName() + ")" + " appeared!");
-                        if (randomEventNPC.getSpeech() != null) {
-                            log("He is saying: \"" + randomEventNPC.getSpeech() + "\"");
-                        }
-
-                        // Let's handle the NPC!
-                        solveRandomNPC(randomEventNPC.getId());
-                    }
-                    if (randomEventItem != null) {
-                        log("The random item with ID " + randomEventItem.getId() + " (" + randomEventItem.toString() + ")" + " is in your inventory!");
-
-                        // Let's handle the item!
-                        solveRandomItem(randomEventItem.getId());
-                    }
-                }
                 break;
 
             case COMBAT:
@@ -294,36 +275,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             }
         }
         return false;
-    }
-
-    private <T extends Interactable & Hullable> void interact(T obj, String action) {
-        Point objPoint;
-        try {
-            objPoint = obj.hullPoint(obj.hull());
-        } catch (Exception e) {
-            return;
-        }
-        mouse.move(objPoint.x, objPoint.y);
-
-        Polygon p = obj.hull();
-        if (p != null && !p.contains(getContext().getBot().getInputHandler().getPosition())) {
-            return;
-        }
-        sleep(100, 150);
-
-        int index = menu.getIndex(action);
-        if (index != -1) {
-            if (index == 0 && random(100) < 50) {
-                mouse.click();
-            } else {
-                mouse.click(true);
-                index = menu.getIndex(action);
-                Point menuPoint = menu.getClickPoint(index);
-                sleep(100, 150);
-                mouse.move(menuPoint.x, menuPoint.y);
-                mouse.click();
-            }
-        }
     }
 
     @Override
@@ -395,14 +346,15 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             if (!waitingForTrees) {
                 switch (r) {
                     case 1:
-                        antiBanStatus += "Check Exp";
+                        // TODO: Put back when game.openTab is fixed
+                        /*antiBanStatus += "Check Exp";
                         game.openTab(Tabs.STATS);
                         sleep(800, 1000);
                         mouse.move(679 + random(15, 45), 390 - random(8, 19));
                         sleep(3500, 5500);
                         game.openTab(Tabs.INVENTORY);
                         sleep(800, 1000);
-                        break;
+                        break;*/
 
                     case 2:
                         antiBanStatus += "Camera Pitch";
@@ -651,7 +603,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                 if (debugMode) {
                     System.out.println("Found birds nest! Picking up...");
                 }
-                interact(nest, "Take");
+                nest.interact("Take");
                 sleep(500, 1100);
             }
         }
@@ -702,10 +654,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return nearestPlayer;
     }
 
-    private Tile getCenterOfArea(Area a) {
-        return new Tile((a.getBottomLeft().getX() + a.getTopRight().getX()) / 2, (a.getBottomLeft().getY() + a.getTopRight().getY()) / 2);
-    }
-
     private Tile getBestWalkableTile() {
         Tile bestTile = null;
         for (int i = 0; i < treePath.length - 1; i++) {
@@ -720,18 +668,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             }
         }
         return bestTile;
-    }
-
-    public static void finishedRandom() {
-        handlingRandom = false;
-    }
-
-    // TODO: Remove when added into API
-    private void clickToContinue() {
-        Point randPoint = Methods.getRandomPointNear(new Point(305, 449), 7);
-        mouse.move(randPoint.x, randPoint.y);
-        sleep(200, 400);
-        mouse.click(true);
     }
 
     // TODO: Remove and use getContext().getBot().getRandomEventPool().register with RandomEvent
@@ -794,7 +730,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                 // Security Handbook TODO: Change to int when .getItem is fixed
                 inventory.interact(inventory.indexOf(inventory.getItem(new int[]{ itemId })), "Drop");
                 sleep(250, 500);
-                finishedRandom();
                 break;
 
             case 3063:
@@ -812,7 +747,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         WALK_TO_TREES,
         CHOPPING,
         PAUSED,
-        SOLVING_RANDOM,
         COMBAT
     }
 
@@ -967,8 +901,8 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             this.treeIds = treeIds;
             this.bankArea = bankArea;
             this.treeType = treeType;
-            this.bankPosition = getCenterOfArea(bankArea);
-            this.treePosition = getCenterOfArea(getTreeArea());
+            this.bankPosition = bankArea.getCenter();
+            this.treePosition = getTreeArea().getCenter();
         }
     }
 }

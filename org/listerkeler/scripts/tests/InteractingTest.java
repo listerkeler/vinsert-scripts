@@ -24,9 +24,11 @@ public class InteractingTest extends Script {
                 return npc.isInteracting() && (localPlayer.getLocation().distanceTo(npc.getLocation()) <= 2);
             }
         })) {
+
             if ((npc.getInteracting() != null) && (localPlayer.getInteracting() != null)) {
                 System.out.println(npc.getName() + " is interacting with " + npc.getInteracting().getName());
             }
+
         }
         return 1000;
     }
@@ -40,5 +42,4 @@ public class InteractingTest extends Script {
     public void render(Graphics2D g) {
 
     }
-
 }

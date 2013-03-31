@@ -1,5 +1,6 @@
 package org.listerkeler.api.randoms;
 
+import org.listerkeler.api.util.Condition;
 import org.listerkeler.api.util.Timer;
 import org.vinsert.bot.script.ScriptManifest;
 import org.vinsert.bot.script.api.Item;
@@ -8,14 +9,24 @@ import org.vinsert.bot.script.api.Widget;
 import org.vinsert.bot.script.api.generic.Filters;
 import org.vinsert.bot.script.randevent.RandomEvent;
 
+import java.awt.*;
+
+import static org.listerkeler.api.util.Methods.*;
+
 @ScriptManifest(name = "Mystery Box", description = "Solves the Mystery Box random", authors = { "listerkeler" }, version = 1.0D)
 public class MysteryBox extends RandomEvent {
     private final int[] MYSTERY_BOX = { 3063 };
+    private final int[] OLD_MAN = { 410 };
 
     public boolean init()
     {
-        if (inventory.contains(Filters.itemId(3063)) || npcs.getNearest(410) != null) {
+        if (inventory.contains(Filters.itemId(MYSTERY_BOX))) {
             return true;
+        }
+        if (npcs.getNearest(OLD_MAN) != null) {
+            if (localPlayer.getLocation().distanceTo(npcs.getNearest(OLD_MAN).getLocation()) <= 2) {
+                return true;
+            }
         }
         return false;
     }
@@ -23,11 +34,10 @@ public class MysteryBox extends RandomEvent {
     public int pulse()
     {
         Item box = inventory.getItem(MYSTERY_BOX);
-        Npc oldMan = npcs.getNearest(410);
+        Npc oldMan = npcs.getNearest(OLD_MAN);
 
         if (oldMan != null) {
-            // TODO: Talk with Mysterious Old Man
-
+            talkWith(oldMan);
         } else if (box != null) {
             solveBox(box);
         }
@@ -37,7 +47,22 @@ public class MysteryBox extends RandomEvent {
 
     public void close()
     {
-        log("Mystery Box solved!");
+        log("Mystery Box successfully solved!");
+    }
+
+    private void talkWith(Npc oldMan) {
+        if (oldMan != null) {
+            oldMan.interact("Talk-to");
+            waitFor(new Condition() {
+                public boolean validate() {
+                    return isValid(242);
+                }
+            }, 2000L);
+        }
+        sleep(500, 900);
+        widgets.clickContinue();
+        sleep(500, 900);
+        requestExit();
     }
 
     private void solveBox(Item box) {
@@ -49,6 +74,7 @@ public class MysteryBox extends RandomEvent {
                         Widget found = widgets.get(190, i);
                         if (found.getText().toLowerCase().contains(answer)) {
                             found.click();
+                            requestExit();
                         }
                     } catch (ArrayIndexOutOfBoundsException ex) {
                         System.out.println("Apparently " + i + " is not in the widget children");
