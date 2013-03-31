@@ -36,6 +36,7 @@ public class MysteryBox extends RandomEvent {
         Item box = inventory.getItem(MYSTERY_BOX);
         Npc oldMan = npcs.getNearest(OLD_MAN);
 
+        // TODO: Also check if the oldMan is interacting with localPlayer when getInteracting works
         if (oldMan != null) {
             talkWith(oldMan);
         } else if (box != null) {

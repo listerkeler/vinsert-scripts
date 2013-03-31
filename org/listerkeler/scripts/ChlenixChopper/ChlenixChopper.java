@@ -2,20 +2,18 @@ package org.listerkeler.scripts.ChlenixChopper;
 
 import org.listerkeler.api.randoms.MysteryBox;
 import org.listerkeler.api.util.Condition;
-import org.listerkeler.api.util.Methods;
 import org.listerkeler.api.util.Timer;
 import org.listerkeler.scripts.ChlenixChopper.ChlenixChopper.ScriptState;
 import org.vinsert.bot.script.ScriptManifest;
 import org.vinsert.bot.script.StatefulScript;
 import org.vinsert.bot.script.api.*;
 import org.vinsert.bot.script.api.generic.Filters;
-import org.vinsert.bot.script.api.generic.Hullable;
-import org.vinsert.bot.script.api.generic.Interactable;
 import org.vinsert.bot.script.api.tools.Game;
-import org.vinsert.bot.script.api.tools.Game.Tabs;
 import org.vinsert.bot.script.api.tools.Navigation.NavigationPolicy;
 import org.vinsert.bot.script.api.tools.Skills;
 import org.vinsert.bot.util.Filter;
+import org.vinsert.bot.util.Perspective;
+import org.vinsert.bot.util.Vec3;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,6 +21,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.DecimalFormat;
+import java.util.*;
+import java.util.List;
 
 @ScriptManifest(name = "ChlenixChopper", authors = {"listerkeler", "Chlenix"}, description = "Chops various trees", version = 1.5D)
 public class ChlenixChopper extends StatefulScript<ScriptState> {
@@ -89,7 +89,7 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
     public static final int MAPLE_LOG = 1520;
 
     public static final int[] YEW_TREE = { 1309 };
-    public static final int YEW_LOG = 1520;
+    public static final int YEW_LOG = 1516;
 
     public static final int[] MAGIC_TREE = { 1306 };
     public static final int MAGIC_LOG = 1514;
@@ -172,6 +172,93 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         treePosition = newSettings.getTreePosition();
     }
 
+    private boolean contains(int[] y, int i) {
+        for (int x : y) {
+            if (x == i) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Point getModelPoint(GameObject obj) {
+        Model model = obj.getModel();
+        if ((model == null) || (!model.isValid())) {
+            return null;
+        }
+
+        Vec3[][] vectors = model.getVectors();
+
+        int xLoc = obj.getLocation().getGx();
+        int yLoc = obj.getLocation().getGy();
+        List<Point> points = new ArrayList<Point>();
+        for (Vec3[] v : vectors) {
+            Vec3 v1 = v[0];
+            Vec3 v2 = v[1];
+            Vec3 v3 = v[2];
+
+            Point a = Perspective.trans_tile_cam(getContext().getClient(), xLoc
+                    + (int) v1.x, yLoc + (int) v3.x, 0 - (int) v2.x);
+            Point b = Perspective.trans_tile_cam(getContext().getClient(), xLoc
+                    + (int) v1.y, yLoc + (int) v3.y, 0 - (int) v2.y);
+            Point c = Perspective.trans_tile_cam(getContext().getClient(), xLoc
+                    + (int) v1.z, yLoc + (int) v3.z, 0 - (int) v2.z);
+            if (Perspective.GAMESCREEN.contains(a)) {
+                points.add(a);
+            }
+            if (Perspective.GAMESCREEN.contains(b)) {
+                points.add(b);
+            }
+            if (Perspective.GAMESCREEN.contains(c)) {
+                points.add(c);
+            }
+        }
+        if (points.isEmpty()) {
+            return null;
+        }
+        return points.get(random(points.size()));
+    }
+
+    public boolean interact(GameObject o, String s) {
+        if (o != null) {
+            Point p = getModelPoint(o);
+
+            if (p != null) {
+                getContext().mouse.move(p.x, p.y);
+                sleep(320);
+            }
+
+            int index;
+            index = getContext().menu.getIndex(s);
+
+            if (index == -1) {
+                return false;
+            }
+
+            if (!getContext().menu.getBounds().contains(
+                    getContext().mouse.getPosition())) {
+                sleep(50);
+            }
+
+            if (index != 0) {
+                getContext().mouse.click(true);
+                sleep(100);
+            } else if (index == 0) {
+                getContext().mouse.click(false);
+                sleep(100);
+                return true;
+            }
+
+            Point p2 = getContext().menu.getClickPoint(index);
+            if (p2 != null) {
+                getContext().mouse.click(p2.x, p2.y);
+                sleep(600);
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public int handle(ScriptState state) {
         switch (state) {
@@ -192,7 +279,8 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                             camera.rotateToObject(bankBooth);
                             sleep(800, 1200);
                         }
-                        bankBooth.interact("Bank");
+                        //bankBooth.interact("Bank");
+                        interact(bankBooth, "Bank");
                         sleep(800, 1200);
                     }
                 }
@@ -229,23 +317,28 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
             case CHOP:
                 checkForBirdsNest();
 
-                GameObject nearestTree = objects.getNearest(Filters.objectId(TREE_OBJECT));
+                GameObject nearestTree = objects.getNearest(new Filter<GameObject>() {
+                    @Override
+                    public boolean accept(GameObject tree) {
+                        if (contains(TREE_OBJECT, tree.getId()) && (localPlayer.getLocation().distanceTo(tree.getLocation()) <= 5)) {
+                            return true;
+                        }
+                        return false;
+                    }
+                });
 
-                if (debugMode) {
-                    System.out.println("FOUND TREE! X=" + nearestTree.getLocation().getX() + ", Y=" + nearestTree.getLocation().getY());
-                }
-
-                if (nearestTree != null) {
+                if (nearestTree != null && contains(TREE_OBJECT, nearestTree.getId())) {
+                    if (debugMode) {
+                        System.out.println("FOUND TREE! X=" + nearestTree.getLocation().getX() + ", Y=" + nearestTree.getLocation().getY());
+                    }
                     if (!camera.isVisible(nearestTree)) {
                         camera.rotateToObject(nearestTree);
                         sleep(800, 1200);
                     }
-                    nearestTree.interact("Chop");
+                    //nearestTree.interact("Chop");
+                    interact(nearestTree, "Chop");
                     sleep(800, 1200);
                 } else {
-                    if (debugMode) {
-                        System.out.println("Waiting for trees...");
-                    }
                     antiBan(true);
                 }
 
@@ -624,15 +717,6 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         return a!= null && a instanceof Npc;
     }
 
-    private <T> boolean contains(T[] arr, T obj) {
-        for (T t : arr) {
-            if (t == null) continue;
-            if (t.equals(obj))
-                return true;
-        }
-        return false;
-    }
-
     private Player getNearestPlayer() {
         Player nearestPlayer = null;
         for (Player p : players.getPlayers(new Filter<Player>() {
@@ -832,16 +916,13 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
                     return new Area(new Tile(2704, 3504), new Tile(2720, 3514));
 
                 case MAPLE:
-                    // TODO: Replace with real MAPLE area
-                    return new Area(new Tile(2704, 3504), new Tile(2720, 3514));
+                    return new Area(new Tile(2721, 3499), new Tile(2733, 3502));
 
                 case YEW:
-                    // TODO: Replace with real YEW area
-                    return new Area(new Tile(2704, 3504), new Tile(2720, 3514));
+                    return new Area(new Tile(2704, 3459), new Tile(2715, 3464));
 
                 case MAGIC:
-                    // TODO: Replace with real MAGIC area
-                    return new Area(new Tile(2704, 3504), new Tile(2720, 3514));
+                    return new Area(new Tile(2690, 3423), new Tile(2698, 3427));
             }
             return null;
         }
@@ -857,30 +938,22 @@ public class ChlenixChopper extends StatefulScript<ScriptState> {
         public Path[] getTreePath() {
             switch (getTreeType()) {
                 case WILLOW:
-                    return  new Path[] {new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
+                    return  new Path[] { new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
                             new Path(bankPosition, new Tile(2718, 3498), new Tile(2708, 3506), new Tile(2709, 3505), treePosition),
                             new Path(bankPosition, new Tile(2716, 3497), new Tile(2707, 3505), new Tile(2711, 3508), treePosition)
                     };
 
                 case MAPLE:
-                    // TODO: Replace with real MAPLE path
-                    return  new Path[] {new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
-                            new Path(bankPosition, new Tile(2718, 3498), new Tile(2708, 3506), new Tile(2709, 3505), treePosition),
-                            new Path(bankPosition, new Tile(2716, 3497), new Tile(2707, 3505), new Tile(2711, 3508), treePosition)
-                    };
+                    return  new Path[] { new Path(bankPosition, treePosition) };
 
                 case YEW:
-                    // TODO: Replace with real YEW path
-                    return  new Path[] {new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
-                            new Path(bankPosition, new Tile(2718, 3498), new Tile(2708, 3506), new Tile(2709, 3505), treePosition),
-                            new Path(bankPosition, new Tile(2716, 3497), new Tile(2707, 3505), new Tile(2711, 3508), treePosition)
+                    return  new Path[] { new Path(bankPosition, new Tile(2726, 3476), new Tile(2722, 3470), treePosition),
+                            new Path(bankPosition, new Tile(2718, 3480), new Tile(2718, 3470), treePosition)
                     };
 
                 case MAGIC:
-                    // TODO: Replace with real MAGIC path
-                    return  new Path[] {new Path(bankPosition, new Tile(2717, 3499), new Tile(2709, 3507), new Tile(2710, 3505), treePosition),
-                            new Path(bankPosition, new Tile(2718, 3498), new Tile(2708, 3506), new Tile(2709, 3505), treePosition),
-                            new Path(bankPosition, new Tile(2716, 3497), new Tile(2707, 3505), new Tile(2711, 3508), treePosition)
+                    return  new Path[] { new Path(bankPosition, new Tile(2727, 3480), new Tile(2726, 3464), new Tile(2721, 3453), new Tile(2710, 3444), new Tile(2702, 3433), new Tile(2701, 3433), treePosition),
+                            new Path(bankPosition, new Tile(2723, 3484), new Tile(2722, 3475), new Tile(2723, 3463), new Tile(2714, 3450), new Tile(2709, 3440), new Tile(2699, 3442), treePosition)
                     };
             }
             return null;
